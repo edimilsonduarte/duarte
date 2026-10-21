@@ -1,0 +1,24 @@
+# Ambiente de DESENVOLVIMENTO — builda tudo a partir do código local.
+# Uso: docker compose up --build
+# Acesse http://localhost:8080
+
+services:
+  proxy:
+    build: ./proxy
+    ports:
+      - "8080:80"
+    depends_on:
+      - api-node
+      - api-python
+      - web-php
+
+  api-node:
+    build: ./apps/api-node
+    environment:
+      - NODE_ENV=development
+
+  api-python:
+    build: ./apps/api-python
+
+  web-php:
+    build: ./apps/web-php

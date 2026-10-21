@@ -1,0 +1,34 @@
+# Ambiente de PRODUÇÃO — roda no VPS com as imagens publicadas no GHCR.
+# Este arquivo é copiado para o VPS pelo workflow de deploy.
+# Uso no VPS: docker compose -f docker-compose.prod.yml up -d
+
+services:
+  proxy:
+    image: ghcr.io/edimilsonduarte/duarte/proxy:latest
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    depends_on:
+      - api-node
+      - api-python
+      - web-php
+
+  api-node:
+    image: ghcr.io/edimilsonduarte/duarte/api-node:latest
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  api-python:
+    image: ghcr.io/edimilsonduarte/duarte/api-python:latest
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  web-php:
+    image: ghcr.io/edimilsonduarte/duarte/web-php:latest
+    env_file:
+      - .env
+    restart: unless-stopped
