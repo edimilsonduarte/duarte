@@ -1,0 +1,51 @@
+name: Manutenção do VPS
+
+# Executa tarefas de manutenção no VPS via SSH, sob demanda.
+# Dispare pela aba Actions (Run workflow) escolhendo a tarefa.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tarefa:
+        description: "Tarefa a executar no VPS"
+        required: true
+        type: choice
+        options:
+          - diagnostico
+          - atualizar-php
+          - tubeclean-deps
+
+concurrency:
+  group: manutencao-vps
+  cancel-in-progress: false
+
+jobs:
+  executar:
+    name: "Executar: ${{ inputs.tarefa }}"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enviar scripts de manutenção para o VPS
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: "deploy/tasks/*"
+          target: "/opt/duarte-manutencao"
+          overwrite: true
+
+      - name: Executar a tarefa
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          command_timeout: 30m
+          script: |
+            set -e
+            chmod +x /opt/duarte-manutencao/deploy/tasks/*.sh
+            bash /opt/duarte-manutencao/deploy/tasks/${{ inputs.tarefa }}.sh
